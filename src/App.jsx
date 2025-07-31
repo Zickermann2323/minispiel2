@@ -36,4 +36,48 @@ function App() {
     }, 15000);
   };
 
-  const show
+  const showTargetBall = () => {
+    if (!canGuess) {
+      setTargetIndex(Math.floor(Math.random() * BALL_COUNT));
+      setShowTarget(true);
+    }
+  };
+
+  const handleClick = (index) => {
+    if (!canGuess) return;
+    if (index === targetIndex) {
+      setResultMessage('🎉 Richtig!');
+    } else {
+      setResultMessage('❌ Falsch!');
+    }
+    setCanGuess(false);
+  };
+
+  return (
+    <div className="App">
+      <h1>Ball Game</h1>
+      <div className="button-container">
+        <button onClick={showTargetBall}>Show Target</button>
+        <button onClick={startGame}>Start</button>
+      </div>
+      <div className="game-area">
+        {positions.map((pos, i) => (
+          <div
+            key={i}
+            className="ball"
+            style={{
+              left: pos.x,
+              top: pos.y,
+              backgroundColor: showTarget && i === targetIndex ? 'red' : 'blue',
+            }}
+            onClick={() => handleClick(i)}
+          />
+        ))}
+      </div>
+      {resultMessage && <div className="result">{resultMessage}</div>}
+    </div>
+  );
+}
+
+export default App;
+
