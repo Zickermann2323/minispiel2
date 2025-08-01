@@ -1,55 +1,56 @@
-// src/BallGame.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './BallGame.css';
 
 const BallGame = () => {
-  const [ballX, setBallX] = useState(50);
-  const [ballY, setBallY] = useState(50);
-  const [targetX, setTargetX] = useState(Math.random() * 90);
-  const [targetY, setTargetY] = useState(Math.random() * 90);
-  const [velocityX, setVelocityX] = useState(1.5);
-  const [velocityY, setVelocityY] = useState(1.2);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
   const [canGuess, setCanGuess] = useState(false);
-  const [showTarget, setShowTarget] = useState(false);
-  const [resultMessage, setResultMessage] = useState('');
+  const [target, setTarget] = useState({ x: 0, y: 0 });
+  const [message, setMessage] = useState('');
+  const animationRef = useRef();
 
-  useEffect(() => {
-    const moveInterval = setInterval(() => {
-      setBallX(prev => (prev + velocityX) % 100);
-      setBallY(prev => (prev + velocityY) % 100);
-    }, 1000 / 60); // 60 FPS
+  const moveBall = () => {
+    setPosition(prev => {
+      let newX = prev.x + (Math.random() - 0.5) * 10;
+      let newY = prev.y + (Math.random() - 0.5) * 10;
+      newX = Math.max(0, Math.min(100, newX));
+      newY = Math.max(0, Math.min(100, newY));
+      return { x: newX, y: newY };
+    });
+    animationRef.current = requestAnimationFrame(moveBall);
+  };
 
-    const stopTimer = setTimeout(() => {
-      clearInterval(moveInterval);
+  const startGame = () => {
+    setMessage('');
+    setCanGuess(false);
+    setTarget({ x: position.x, y: position.y });
+    animationRef.current = requestAnimationFrame(moveBall);
+
+    setTimeout(() => {
+      cancelAnimationFrame(animationRef.current);
       setCanGuess(true);
-    }, 15000);
+    }, 15000); // 15 Sekunden
+  };
 
-    return () => {
-      clearInterval(moveInterval);
-      clearTimeout(stopTimer);
-    };
-  }, []);
-
-  const handleShowTarget = () => {
-    setShowTarget(true);
-    const dx = ballX - targetX;
-    const dy = ballY - targetY;
+  const handleGuess = () => {
+    const dx = position.x - target.x;
+    const dy = position.y - target.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    setResultMessage(`Abstand zum Ziel: ${distance.toFixed(2)}%`);
+
+    if (distance < 10) {
+      setMessage('🎉 Treffer! Gut geraten!');
+    } else {
+      setMessage(`Leider daneben. Abstand: ${distance.toFixed(2)}`);
+    }
+    setCanGuess(false);
   };
 
   return (
     <div className="game-container">
-      <div className="play-area">
-        <div className="ball" style={{ left: `${ballX}%`, top: `${ballY}%` }} />
-        {showTarget && (
-          <div className="target" style={{ left: `${targetX}%`, top: `${targetY}%` }} />
-        )}
-      </div>
-      {canGuess && !showTarget && (
-        <button onClick={handleShowTarget}>Ziel anzeigen</button>
-      )}
-      {resultMessage && <p>{resultMessage}</p>}
+      <h1>Ball Game</h1>
+      <div className="ball" style={{ left: `${position.x}%`, top: `${position.y}%` }} />
+      <button onClick={startGame}>Start</button>
+      <button onClick={handleGuess} disabled={!canGuess}>Raten</button>
+      <p>{message}</p>
     </div>
   );
 };
